@@ -55,6 +55,8 @@ public class IrrigateOverlayRenderer {
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
             int radius = 24;
+            boolean anyVertices = false;
+
             for (BlockPos pos : BlockPos.iterate(
                     playerPos.add(-radius, -4, -radius),
                     playerPos.add(radius, 4, radius)
@@ -77,13 +79,15 @@ public class IrrigateOverlayRenderer {
                 buffer.vertex(matrix, x0, y, z1).color(r, g, b, a);
                 buffer.vertex(matrix, x1, y, z1).color(r, g, b, a);
                 buffer.vertex(matrix, x1, y, z0).color(r, g, b, a);
+                anyVertices = true;
             }
 
-            BufferRenderer.drawWithGlobalProgram(buffer.end());
+            if (anyVertices) {
+                BufferRenderer.drawWithGlobalProgram(buffer.end());
+            }
 
             RenderSystem.enableDepthTest();
             RenderSystem.disableBlend();
-
             matrices.pop();
         });
     }
