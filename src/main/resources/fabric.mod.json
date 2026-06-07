@@ -8,8 +8,7 @@
 		"Lemko"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/lemkorusyn/Irrigate"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/irrigate/icon.png",
