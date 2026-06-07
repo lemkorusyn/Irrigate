@@ -1,16 +1,19 @@
 package lemko.irrigate;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
-import net.minecraft.client.gl.ShaderProgramKeys;
 
 public class IrrigateOverlayRenderer {
 
@@ -25,6 +28,22 @@ public class IrrigateOverlayRenderer {
     private static final float DRY_G = 0.2f;
     private static final float DRY_B = 0.2f;
     private static final float DRY_A = 0.3f;
+
+    private static final RenderPipeline IRRIGATE_PIPELINE = RenderPipeline.builder(
+                    RenderPipelines.POSITION_COLOR_SNIPPET
+            )
+            .withLocation(Identifier.of("irrigate", "irrigate_overlay"))
+            .withBlend(BlendFunction.TRANSLUCENT)
+            .build();
+
+    private static final RenderLayer IRRIGATE_LAYER = RenderLayer.of(
+            "irrigate_overlay",
+            1536,
+            false,
+            true,
+            IRRIGATE_PIPELINE,
+            RenderLayer.MultiPhaseParameters.builder().build(false)
+    );
 
     public static void register() {
         WorldRenderEvents.LAST.register(context -> {
@@ -44,17 +63,14 @@ public class IrrigateOverlayRenderer {
             matrices.push();
             matrices.translate(-camera.x, -camera.y, -camera.z);
 
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.disableDepthTest();
-            RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
-
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
             Matrix4f matrix = matrices.peek().getPositionMatrix();
 
             int radius = 24;
+            boolean anyVertices = false;
+
             for (BlockPos pos : BlockPos.iterate(
                     playerPos.add(-radius, -4, -radius),
                     playerPos.add(radius, 4, radius)
@@ -77,12 +93,12 @@ public class IrrigateOverlayRenderer {
                 buffer.vertex(matrix, x0, y, z1).color(r, g, b, a);
                 buffer.vertex(matrix, x1, y, z1).color(r, g, b, a);
                 buffer.vertex(matrix, x1, y, z0).color(r, g, b, a);
+                anyVertices = true;
             }
 
-            BufferRenderer.drawWithGlobalProgram(buffer.end());
-
-            RenderSystem.enableDepthTest();
-            RenderSystem.disableBlend();
+            if (anyVertices) {
+                IRRIGATE_LAYER.draw(buffer.end());
+            }
 
             matrices.pop();
         });
